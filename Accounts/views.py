@@ -14,10 +14,16 @@ from django.contrib.auth import authenticate
 from django.db.models import Sum
 from .models import UserProfile, KYC, BankDetails, Deposit, withdraw
 from .serializers import UserProfileSerializer, OtpVerificationSerializer, KYCPanSerializer, KYCImageSerializer, PhoneNumberSerializer, PasswordSerializer, AddressSerializer, BankDetailsSerializer, WithdrawSerializer, DepositSerializer
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+
 
 
 
 class UserProfileCreateAPIView(APIView):
+    @csrf_exempt  # Disable CSRF for this API (use proper authentication in production)
+    @api_view(['POST'])
+    @permission_classes([AllowAny])
     def post(self, request):
         print("data_1:", request.data)
         serializer = UserProfileSerializer(data=request.data)
