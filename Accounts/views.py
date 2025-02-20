@@ -4,7 +4,7 @@ import requests
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
 from django.shortcuts import render
@@ -20,6 +20,12 @@ from .serializers import UserProfileSerializer, OtpVerificationSerializer, KYCPa
 
 
 class UserProfileCreateAPIView(APIView):
+    def get_permissions(self):
+        """Override default permissions based on request method."""
+        if self.request.method == "POST":
+            return [AllowAny()]  
+        return [IsAuthenticated()]
+    
     def post(self, request):
         print("data_1:", request.data)
         serializer = UserProfileSerializer(data=request.data)
@@ -39,8 +45,7 @@ class UserProfileCreateAPIView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]  
+    authentication_classes = [TokenAuthentication] 
 
     def put(self, request):
         user = request.user  
