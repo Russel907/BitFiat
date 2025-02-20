@@ -112,7 +112,7 @@ class BankDetails(models.Model):
     
 
 class withdraw(models.Model):
-    user_profile = models.OneToOneField(User, on_delete=models.CASCADE, related_name='withdraw')
+    user_profile = models.ForeignKey(User, on_delete=models.CASCADE, related_name='withdraw')
     wallet_address = models.CharField(max_length=255, unique=False)
     amount = models.DecimalField(max_digits=20, decimal_places=8)
     verification_code = models.CharField(max_length=6)
@@ -124,7 +124,7 @@ class withdraw(models.Model):
 
 
 class Deposit(models.Model):
-    user_profile = models.OneToOneField(User, on_delete=models.CASCADE, related_name='Deposit')
+    user_profile = models.ForeignKey(User, on_delete=models.CASCADE, related_name='Deposit')
     amount = models.DecimalField(max_digits=20, decimal_places=8)
     network = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
