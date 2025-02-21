@@ -25,6 +25,7 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("This phone number is already registered.")
         
         return value
+    
 
     def validate_email(self, value):
         if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', value):
@@ -33,7 +34,8 @@ class UserSerializer(serializers.ModelSerializer):
         if User.objects.filter(email=value).exclude(pk=self.instance.pk if self.instance else None).exists():
             raise serializers.ValidationError("This email is already in use.")
         return value
-
+    
+     
 class UserProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(required=True)
     referral_code = serializers.CharField(write_only=True, required=False, allow_blank=True)
@@ -74,37 +76,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
         user_profile = UserProfile.objects.create(user=user_instance, referred_by=referred_by_profile)
         
         return user_profile
-
-    def update(self, instance, validated_data):
-        user_data = validated_data.pop('user', {})
-        user_profile = instance.userprofile  
-
-        new_phone_number = user_data.get('username')
-        if new_phone_number and new_phone_number != instance.username:
-            user_profile.is_verified = False
-
-        instance.username = user_data.get('username', instance.username)
-        instance.first_name = user_data.get('first_name', instance.first_name)
-        instance.email = user_data.get('email', instance.email)
-
-        instance.save()
-        user_profile.save()
-
-        return instance
-        # user_profile = instance.userprofile 
-
-        # new_phone_number = validated_data.get('username')
-        # if new_phone_number and new_phone_number != instance.username:
-        #     user_profile.is_verified = False
-
-        # instance.username = validated_data.get('username', instance.username)
-        # instance.first_name = validated_data.get('first_name', instance.first_name)
-        # instance.email = validated_data.get('email', instance.email)
-
-        # instance.save()
-        # user_profile.save()
-
-        # return instance
 
 
 class OtpVerificationSerializer(serializers.ModelSerializer):

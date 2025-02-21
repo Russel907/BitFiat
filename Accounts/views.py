@@ -13,7 +13,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from django.db.models import Sum
 from .models import UserProfile, KYC, BankDetails, Deposit, withdraw
-from .serializers import UserProfileSerializer, OtpVerificationSerializer, KYCPanSerializer, KYCImageSerializer, PhoneNumberSerializer, PasswordSerializer, AddressSerializer, BankDetailsSerializer, WithdrawSerializer, DepositSerializer
+from .serializers import UserProfileSerializer, OtpVerificationSerializer, KYCPanSerializer, KYCImageSerializer, PhoneNumberSerializer, PasswordSerializer, AddressSerializer, BankDetailsSerializer, WithdrawSerializer, DepositSerializer, UserSerializer
 
 
 
@@ -47,21 +47,44 @@ class UserProfileCreateAPIView(APIView):
     
     authentication_classes = [TokenAuthentication] 
 
+
+
+class EditProfileAPIView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def put(self, request):
-        user = request.user  
-        serializer = UserProfileSerializer(user, data=request.data, partial=True)  
+        user = request.user
+        user_profile = user.userprofile
+        data = request.data
+
+        serializer = UserSerializer(user, data=data, partial=True)
 
         if serializer.is_valid():
-            updated_user = serializer.save()  
-            user_profile = updated_user.userprofile
-            user_profile = updated_user.userprofile
-            response_data = {
-                "message": "Profile updated successfully",
-                "user_profile": serializer.data,
-                "is_verified": user_profile.is_verified  # Add is_verified field
-            }
+            new_phone_number = serializer.validated_data.get('username')
+            new_email = serializer.validated_data.get('email')
+            new_name = serializer.validated_data.get('first_name')
 
-            return Response(response_data, status=status.HTTP_200_OK)
+            # Check phone number uniqueness and update
+            if new_phone_number and new_phone_number != user.username:
+                if User.objects.filter(username=new_phone_number).exclude(pk=user.pk).exists():
+                    return Response({"error": "Phone number is already registered."}, status=status.HTTP_400_BAD_REQUEST)
+                user_profile.is_verified = False  # Mark as unverified if phone number changes
+
+            # Check email uniqueness and update
+            if new_email and new_email != user.email:
+                if User.objects.filter(email=new_email).exclude(pk=user.pk).exists():
+                    return Response({"error": "Email is already in use."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Save changes
+            serializer.save()
+            user_profile.save()
+
+            return Response({
+                "message": "Profile updated successfully",
+                "user_profile": UserProfileSerializer(user_profile).data,
+                "is_verified": user_profile.is_verified
+            }, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
